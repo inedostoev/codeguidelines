@@ -122,5 +122,4 @@ if __name__ == "__main__":
     else:
         print("Error, unknown format of comand str")
         sys.exit(1)
-    print(exitCode)
     sys.exit(exitCode)
