@@ -1,8 +1,10 @@
 #!/usr/bin/python
-# pre-commit.py - githook script
+# codeguidelines.py - githook script
 # @author Kirill Nedostoev <nedostoev.ka@phystech.edu>
 
 import sys
+import os
+from os.path import isdir
 import subprocess
 
 def runGitDiff():
@@ -30,7 +32,7 @@ def fileAnalysis(fileName):
         return 1
     for word in splitBuffer:
         if word in blameList:
-            print(word + " is prohibited")
+            print("'" + word + "' is prohibited")
             return 1
     return 0
 
@@ -43,6 +45,7 @@ def checkTrailingSpaces(fileName):
     fd.close()
     splitBuffer = buffer.split('\n')
     counter = 0
+    exitCode = 0
     while counter < len(splitBuffer):
         line = splitBuffer[counter]
         if len(line) == 0:
@@ -50,9 +53,9 @@ def checkTrailingSpaces(fileName):
             continue
         if line[len(line) - 1] == ' ':
             print("Trailing space in line: %i" % (counter + 1))
-            return 1
+            exitCode = 1
         counter += 1
-    return 0
+    return exitCode
 
 def checkUsingNamespace(buffer):
     counter = 0
@@ -67,20 +70,57 @@ def checkUsingNamespace(buffer):
 def checkTab(buffer):
     return buffer.find('\t');
 
+def changeExitCode(exitCode, returnCode):
+    if exitCode == 1:
+        return 1;
+    elif exitCode == 0 and returnCode == 1:
+        return 1;
+    else:
+        return 0;
 
-if __name__ == "__main__":
-    output = runGitDiff()
-    output = output.split()
-    exitCode = 0
-    for fileName in output:
-        print("Testing code style of file: " + fileName)
-        result = checkTrailingSpaces(fileName)
-        if result == 1:
-            print("Test failed")
-            sys.exit(1)
-        result = fileAnalysis(fileName)
+def checkDirOrFile(item):
+    exitCode = 0;
+    if item == ".git":
+        return 0
+    if isdir(item):
+        listOfDir = os.listdir(item);
+        for newitem in listOfDir:
+            exitCode = changeExitCode(exitCode, checkDirOrFile(item + "/" + newitem))
+    else:
+        print("Testing code style of file: " + item)
+        result = checkTrailingSpaces(item)
         if result == 1:
             print("Test failed")
             exitCode = 1
-    sys.exit(exitCode)
+        result = fileAnalysis(item)
+        if result == 1:
+            print("Test failed")
+            exitCode = 1
+    return exitCode;
 
+
+if __name__ == "__main__":
+    mode = sys.argv[1]
+    exitCode = 0
+    if mode == "commit":
+        output = runGitDiff()
+        output = output.split()
+        for fileName in output:
+            print("Testing code style of file: " + fileName)
+            result = checkTrailingSpaces(fileName)
+            if result == 1:
+                print("Test failed")
+                exitCode = 1
+            result = fileAnalysis(fileName)
+            if result == 1:
+                print("Test failed")
+                exitCode = 1
+    elif mode == "push":
+        listOfDir = os.listdir(sys.argv[2]);
+        for item in listOfDir:
+            exitCode = changeExitCode(exitCode, checkDirOrFile(item))
+    else:
+        print("Error, unknown format of comand str")
+        sys.exit(1)
+    print(exitCode)
+    sys.exit(exitCode)
