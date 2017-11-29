@@ -7,6 +7,15 @@ import os
 from os.path import isdir
 import subprocess
 
+tmpFileName = "4b825dc642cb6eb9a060e54bf8d69288fbee4904i.c"
+
+class tColors:
+    OKGREEN =   '\033[92m'
+    FAIL =      '\033[91m'
+    WARNING =   '\033[93m'
+    ENDC =      '\033[0m'
+    BLUE =      '\033[94m'
+
 def runGitDiff():
     output = subprocess.check_output(['git', 'diff',
                                       '--cached',
@@ -21,42 +30,39 @@ def runGCC(fileName):
 
 
 def fileAnalysis(fileName):
-    if fileName.find(".cpp") == -1 or fileName.find(".c"):
-        return 0
-    if fileName.find(".h") == -1 or fileName.find(".hpp"):
-        return 0   
 
+    if ((fileName.rfind('.cpp') == -1) and (fileName.rfind('.c') == -1)) and ((fileName.find('.hpp') == -1) and (fileName.find('.h') == -1)):
+            return 0   
+    
+    print("Testing code style of file: " + tColors.OKGREEN + fileName + tColors.ENDC)
+    
     fd = open(fileName, 'r')
     buffer = fd.read()
     fd.close()
-    fd = open("4b825dc642cb6eb9a060e54bf8d69288fbee4904i.c", 'w+')
-    buffer = buffer.replace("include", " ")
+
+    exitCode = 0
+    result = checkTrailingSpaces(buffer)
+    if result == 1:
+        exitCode = 1 
+
+    fd = open(tmpFileName, 'w+')
+    buffer = buffer.replace("#include", " ")
     fd.write(buffer)
     fd.close()
     
-    buffer = runGCC("4b825dc642cb6eb9a060e54bf8d69288fbee4904i.c")
-    output = subprocess.call(['rm', '4b825dc642cb6eb9a060e54bf8d69288fbee4904i.c'])
-    if checkTab(buffer) != -1:
-        print("Tab is prohibited")
-        return 1
-    buffer = deleteComments(buffer)
+    buffer = runGCC(tmpFileName)
+    output = subprocess.call(['rm', tmpFileName])
     blameList = [ "try", "catch", "typedef", "dynamic_cast" ]
     splitBuffer = buffer.split();
     if checkUsingNamespace(splitBuffer) == 1:
-        return 1
+        exitCode = 1
     for word in splitBuffer:
         if word in blameList:
-            print("'" + word + "' is prohibited")
-            return 1
-    return 0
+            print("'" + tColors.WARNING + word + tColors.ENDC + "' is prohibited")
+            exitCode = 1
+    return exitCode
 
-def deleteComments(buffer):
-    return buffer
-
-def checkTrailingSpaces(fileName):
-    fd = open(fileName, 'r')
-    buffer = fd.read()
-    fd.close()
+def checkTrailingSpaces(buffer):
     splitBuffer = buffer.split('\n')
     counter = 0
     exitCode = 0
@@ -66,7 +72,7 @@ def checkTrailingSpaces(fileName):
             counter += 1
             continue
         if line[len(line) - 1] == ' ':
-            print("Trailing space in line: %i" % (counter + 1))
+            print(tColors.WARNING + "Trailing space " + tColors.ENDC  + "in line: " +tColors.BLUE + ("%i" % (counter + 1)) + tColors.ENDC)
             exitCode = 1
         counter += 1
     return exitCode
@@ -75,14 +81,18 @@ def checkUsingNamespace(buffer):
     counter = 0
     while counter < len(buffer):
         if buffer[counter] == "using" and buffer[counter + 1] == "namespace":
-            print("'using namespace' is prohibited")
+            print("'" + tColors.WARNING + "using namespace" + tColors.ENDC + "' is prohibited")
             return 1
         counter += 1
     return 0
 
-
-def checkTab(buffer):
-    return buffer.find('\t');
+def checkFile(fileName):
+    exitCode = 0
+    result = fileAnalysis(fileName)
+    if result == 1:
+        print(tColors.FAIL + "Test failed" + tColors.ENDC)
+        exitCode = 1
+    return exitCode
 
 def changeExitCode(exitCode, returnCode):
     if exitCode == 1:
@@ -92,48 +102,36 @@ def changeExitCode(exitCode, returnCode):
     else:
         return 0;
 
-def checkDirOrFile(item):
+def checkDirOrFile(fileName):
     exitCode = 0;
-    if item == ".git":
+    if fileName == ".git":
         return 0
-    if isdir(item):
-        listOfDir = os.listdir(item);
+    if isdir(fileName):
+        listOfDir = os.listdir(fileName);
         for newitem in listOfDir:
-            exitCode = changeExitCode(exitCode, checkDirOrFile(item + "/" + newitem))
+            exitCode = changeExitCode(exitCode, checkDirOrFile(fileName + "/" + newitem))
     else:
-        print("Testing code style of file: " + item)
-        result = checkTrailingSpaces(item)
-        if result == 1:
-            print("Test failed")
-            exitCode = 1
-        result = fileAnalysis(item)
-        if result == 1:
-            print("Test failed")
-            exitCode = 1
+        exitCode = checkFile(fileName)
     return exitCode;
 
 
 if __name__ == "__main__":
     mode = sys.argv[1]
     exitCode = 0
+
     if mode == "commit":
         output = runGitDiff()
         output = output.split()
         for fileName in output:
-            print("Testing code style of file: " + fileName)
-            result = checkTrailingSpaces(fileName)
-            if result == 1:
-                print("Test failed")
-                exitCode = 1
-            result = fileAnalysis(fileName)
-            if result == 1:
-                print("Test failed")
-                exitCode = 1
+            exitCode = checkFile(fileName)
+
     elif mode == "push":
         listOfDir = os.listdir(sys.argv[2]);
-        for item in listOfDir:
-            exitCode = changeExitCode(exitCode, checkDirOrFile(item))
+        for fileName in listOfDir:
+            exitCode = changeExitCode(exitCode, checkDirOrFile(fileName))
+
     else:
-        print("Error, unknown format of comand str")
+        print(tColors.FAIL + "Error, unknown format of comand str")
         sys.exit(1)
+    
     sys.exit(exitCode)
