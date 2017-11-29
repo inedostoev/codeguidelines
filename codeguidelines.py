@@ -30,8 +30,8 @@ def runGCC(fileName):
 
 
 def fileAnalysis(fileName):
-
-    if ((fileName.rfind('.cpp') == -1) and (fileName.rfind('.c') == -1)) and ((fileName.find('.hpp') == -1) and (fileName.find('.h') == -1)):
+    strlen = len(fileName)
+    if ((fileName.rfind('.cpp') != (strlen- 4)) and (fileName.rfind('.c') != (strlen - 2)) and ((fileName.rfind('.hpp') != (strlen - 4)) and (fileName.rfind('.h') != (strlen - 2)))):
             return 0   
     
     print("Testing code style of file: " + tColors.OKGREEN + fileName + tColors.ENDC)
