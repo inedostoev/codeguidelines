@@ -32,10 +32,10 @@ def runGCC(fileName):
 def fileAnalysis(fileName):
     strlen = len(fileName)
     if ((fileName.rfind('.cpp') != (strlen- 4)) and (fileName.rfind('.c') != (strlen - 2)) and ((fileName.rfind('.hpp') != (strlen - 4)) and (fileName.rfind('.h') != (strlen - 2)))):
-            return 0   
-    
+            return 0 
+
     print("Testing code style of file: " + tColors.OKGREEN + fileName + tColors.ENDC)
-    
+
     fd = open(fileName, 'r')
     buffer = fd.read()
     fd.close()
@@ -43,13 +43,13 @@ def fileAnalysis(fileName):
     exitCode = 0
     result = checkTrailingSpaces(buffer)
     if result == 1:
-        exitCode = 1 
+        exitCode = 1
 
     fd = open(tmpFileName, 'w+')
     buffer = buffer.replace("#include", " ")
     fd.write(buffer)
     fd.close()
-    
+
     buffer = runGCC(tmpFileName)
     output = subprocess.call(['rm', tmpFileName])
     blameList = [ "try", "catch", "typedef", "dynamic_cast" ]
@@ -133,5 +133,5 @@ if __name__ == "__main__":
     else:
         print(tColors.FAIL + "Error, unknown format of comand str")
         sys.exit(1)
-    
+ 
     sys.exit(exitCode)
