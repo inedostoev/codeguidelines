@@ -15,13 +15,27 @@ def runGitDiff():
     return output
 
 def runGCC(fileName):
-    output = subprocess.check_output(['gcc', '-E', fileName],
+    output = subprocess.check_output(['g++', '-E', fileName],
                                      stderr=subprocess.STDOUT)
     return output
 
 
 def fileAnalysis(fileName):
-    buffer = runGCC(fileName)
+    if fileName.find(".cpp") == -1 or fileName.find(".c"):
+        return 0
+    if fileName.find(".h") == -1 or fileName.find(".hpp"):
+        return 0   
+
+    fd = open(fileName, 'r')
+    buffer = fd.read()
+    fd.close()
+    fd = open("4b825dc642cb6eb9a060e54bf8d69288fbee4904i.c", 'w+')
+    buffer = buffer.replace("include", " ")
+    fd.write(buffer)
+    fd.close()
+    
+    buffer = runGCC("4b825dc642cb6eb9a060e54bf8d69288fbee4904i.c")
+    output = subprocess.call(['rm', '4b825dc642cb6eb9a060e54bf8d69288fbee4904i.c'])
     if checkTab(buffer) != -1:
         print("Tab is prohibited")
         return 1
