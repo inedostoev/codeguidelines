@@ -30,5 +30,5 @@ If something went wrong, you can contact with me on email:
  
 nedostoev.ka@phystech.edu
 
-inedostoev@gmail.com`
+inedostoev@gmail.com
 
