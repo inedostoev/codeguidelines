@@ -102,14 +102,15 @@ def changeExitCode(exitCode, returnCode):
     else:
         return 0;
 
-def checkDirOrFile(fileName):
+def checkDirOrFile(fileName, exeptionList):
     exitCode = 0;
-    if fileName == ".git":
-        return 0
+    for word in exeptionList:
+        if fileName == word:
+            return 0
     if isdir(fileName):
         listOfDir = os.listdir(fileName);
         for newitem in listOfDir:
-            exitCode = changeExitCode(exitCode, checkDirOrFile(fileName + "/" + newitem))
+            exitCode = changeExitCode(exitCode, checkDirOrFile(fileName + "/" + newitem, exeptionList))
     else:
         exitCode = checkFile(fileName)
     return exitCode;
@@ -118,7 +119,6 @@ def checkDirOrFile(fileName):
 if __name__ == "__main__":
     mode = sys.argv[1]
     exitCode = 0
-
     if mode == "commit":
         output = runGitDiff()
         output = output.split()
@@ -126,9 +126,14 @@ if __name__ == "__main__":
             exitCode = checkFile(fileName)
 
     elif mode == "push":
+        exeptionList = ['.git']
+        i = 3
+        while i != len(sys.argv):
+            exeptionList.append(sys.argv[i])
+            i += 1
         listOfDir = os.listdir(sys.argv[2]);
         for fileName in listOfDir:
-            exitCode = changeExitCode(exitCode, checkDirOrFile(fileName))
+            exitCode = changeExitCode(exitCode, checkDirOrFile(fileName, exeptionList))
 
     else:
         print(tColors.FAIL + "Error, unknown format of comand str")
