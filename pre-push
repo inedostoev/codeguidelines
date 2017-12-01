@@ -1,6 +1,7 @@
 #!/bin/sh
 
-exec python $(git rev-parse --show-toplevel)/.git/hooks/codeguidelines.py push "$(git rev-parse --show-toplevel)" "binutils" "googletest" "docs" "traces"
+my_dir=`dirname "$0"`
+exec python $my_dir/codeguidelines.py push "$(git rev-parse --show-toplevel)" "binutils" "googletest" "docs" "traces"
 
 remote="$1"
 url="$2"
