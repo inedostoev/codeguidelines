@@ -6,24 +6,21 @@ This program - Python script, that can prevent `commit` or `push` code with wron
 It is supported:
 * Checking trailing spaces
 * Prevent of using:
-    1. try/catch
-    2. typedef
-    3. using namespace
-    4. dynamic_cast
+    1. pre C++11: `typedef`
+    2. exceptions: `try`, `catch`
+    3. `using namespace ...`
+    4. RTTI: `dynamic_cast`, `typeid`
 
 ## How to use?
 At first, you should choose, when a check is called.
 
 `pre-push` - called before `git push`
-
 `pre-commit` - called before `git commit`
 
-When you choose variant of gitHook, or you choose two variants, you should copy `codeguidelines.py` and `pre-push` or `pre-commit` into `.git/hooks`
-
-For ex. make `pre-push` gitHook:
+When you choose variant of gitHook, or you choose both variants, add the repository as submodule and configure hooks:
 ```bash
-cp codeguidelines.py ../.git/hooks/codeguidelines.py
-cp pre-push ../.git/hooks/pre-push
+git submodule add ...
+git config core.hooksPath hooks
 ```
 
 If something went wrong, you can contact with me on email:
